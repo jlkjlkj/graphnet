@@ -300,8 +300,9 @@ class DynEdge(GNN):
         # DynEdge-convolutions
         skip_connections = [x]
         for conv_layer in self._conv_layers:
-            x, edge_index = conv_layer(x, edge_index, batch)
-            skip_connections.append(x)
+            # x, edge_index = conv_layer(x, edge_index, batch)
+            data = conv_layer(data)
+            skip_connections.append(data.x)
 
         # This is a test comment! for commit
         # Skip-cat
