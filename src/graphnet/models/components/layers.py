@@ -47,7 +47,7 @@ class DynEdgeConv(EdgeConv, LightningModule):
 
         # )  # will estimate optimal radius
         self.radius_regressor = Sequential(
-            Linear(7, 19), Linear(19, 1), ReLU()
+            Linear(None, 32), ReLU(), Linear(32, 64), ReLU(), Linear(64, 1)
         )  # will estimate optimal radius
 
     def forward(
@@ -56,7 +56,7 @@ class DynEdgeConv(EdgeConv, LightningModule):
         """Forward pass."""
         # Standard EdgeConv forward pass
         x = super().forward(x, edge_index)
-
+        # YOU WILL NEED TO WRITE SOMETHING HERE FOR THE MLP
         # Recompute adjacency
         edge_index = knn_graph(
             x=x[:, self.features_subset],
