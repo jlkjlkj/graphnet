@@ -46,6 +46,9 @@ class DynEdgeConv(EdgeConv, LightningModule):
         self.features_subset = features_subset
 
         # )  # will estimate optimal radius
+        self.radius_regressor = Sequential(
+            Linear(7, 19), Linear(19, 1), ReLU()
+        )  # will estimate optimal radius
 
     def forward(
         self, x: Tensor, edge_index: Adj, batch: Optional[Tensor] = None
