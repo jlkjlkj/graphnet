@@ -3,6 +3,7 @@
 from typing import Any, Callable, Optional, Sequence, Union
 
 from torch.functional import Tensor
+from torch.nn import ReLU, Linear, Sequential
 from torch_geometric.nn import EdgeConv
 from torch_geometric.nn.pool import knn_graph
 from torch_geometric.typing import Adj
@@ -43,6 +44,8 @@ class DynEdgeConv(EdgeConv, LightningModule):
         # Additional member variables
         self.nb_neighbors = nb_neighbors
         self.features_subset = features_subset
+
+        # )  # will estimate optimal radius
 
     def forward(
         self, x: Tensor, edge_index: Adj, batch: Optional[Tensor] = None
