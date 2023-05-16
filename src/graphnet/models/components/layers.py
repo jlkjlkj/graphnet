@@ -4,7 +4,7 @@ from typing import Any, Callable, Optional, Sequence, Union
 
 from torch.functional import Tensor
 from torch.nn import ReLU, Linear, Sequential
-from torch_geometric.nn import EdgeConv
+from torch_geometric.nn import EdgeConv, radius_graph
 from torch_geometric.nn.pool import knn_graph
 from torch_geometric.typing import Adj
 from pytorch_lightning import LightningModule
@@ -19,6 +19,7 @@ class DynEdgeConv(EdgeConv, LightningModule):
         aggr: str = "max",
         nb_neighbors: int = 8,
         features_subset: Optional[Union[Sequence[int], slice]] = None,
+        # global_variables: Optional[Union[Sequence[int], slice]],
         **kwargs: Any,
     ):
         """Construct `DynEdgeConv`.
@@ -58,11 +59,18 @@ class DynEdgeConv(EdgeConv, LightningModule):
         # Standard EdgeConv forward pass
         x = super().forward(x, edge_index)
         # YOU WILL NEED TO WRITE SOMETHING HERE FOR THE MLP
+        r = self.radius_regressor()
         # Recompute adjacency
-        edge_index = knn_graph(
+        # edge_index = knn_graph(
+        #     x=x[:, self.features_subset],
+        #     k=self.nb_neighbors,
+        #     batch=batch,
+        # ).to(self.device)
+        edge_index = radius_graph(
             x=x[:, self.features_subset],
-            k=self.nb_neighbors,
+            r=r,
             batch=batch,
+            max_num_neighbors=64,
         ).to(self.device)
 
         return x, edge_index
