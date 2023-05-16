@@ -44,6 +44,7 @@ class DynEdgeConv(EdgeConv, LightningModule):
         # Additional member variables
         self.nb_neighbors = nb_neighbors
         self.features_subset = features_subset
+        # self.global_variables = global_variables
 
         # )  # will estimate optimal radius
         self.radius_regressor = Sequential(
