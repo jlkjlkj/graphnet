@@ -8,6 +8,7 @@ from torch_geometric.nn import EdgeConv, radius_graph
 from torch_geometric.nn.pool import knn_graph
 from torch_geometric.typing import Adj
 from pytorch_lightning import LightningModule
+from torch_scatter import scatter_min
 
 
 class DynEdgeConv(EdgeConv, LightningModule):
@@ -53,24 +54,23 @@ class DynEdgeConv(EdgeConv, LightningModule):
         )  # will estimate optimal radius
 
     def forward(
-        self, x: Tensor, edge_index: Adj, batch: Optional[Tensor] = None
+        self, edge_index: Adj, batch: Optional[Tensor] = None
     ) -> Tensor:
         """Forward pass."""
         # Standard EdgeConv forward pass
-        x = super().forward(x, edge_index)
+        # x = super().forward(x, edge_index)
         # YOU WILL NEED TO WRITE SOMETHING HERE FOR THE MLP
-        r = self.radius_regressor()
         # Recompute adjacency
-        # edge_index = knn_graph(
+        # radii = scatter_min(self.radius_regressor(x), data.batch, dim=0).reshape(-1,1)
+        # for i in range(len(data_list)):
+        #     data_list[i].edge_index = radius_graph(
+        #         x=data_list[i].x[:, 0,1,2], r=radii[i,:].item()
+        #     )
+        # edge_index = radius_graph(
         #     x=x[:, self.features_subset],
-        #     k=self.nb_neighbors,
+        #     r=r,
         #     batch=batch,
+        #     max_num_neighbors=64,
         # ).to(self.device)
-        edge_index = radius_graph(
-            x=x[:, self.features_subset],
-            r=r,
-            batch=batch,
-            max_num_neighbors=64,
-        ).to(self.device)
 
-        return x, edge_index
+        return edge_index
