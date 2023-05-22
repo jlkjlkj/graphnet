@@ -9,6 +9,7 @@ from torch_geometric.nn.pool import knn_graph
 from torch_geometric.typing import Adj
 from pytorch_lightning import LightningModule
 from torch_scatter import scatter_min
+from torch_geometric.data import Data
 
 
 class DynEdgeConv(EdgeConv, LightningModule):
@@ -47,30 +48,24 @@ class DynEdgeConv(EdgeConv, LightningModule):
         self.nb_neighbors = nb_neighbors
         self.features_subset = features_subset
         # self.global_variables = global_variables
-
-        # )  # will estimate optimal radius
+        # Will estimate optimal radii
         self.radius_regressor = Sequential(
             Linear(None, 32), ReLU(), Linear(32, 64), ReLU(), Linear(64, 1)
-        )  # will estimate optimal radius
+        )
 
-    def forward(
-        self, edge_index: Adj, batch: Optional[Tensor] = None
-    ) -> Tensor:
+    def forward(self, data: Data, batch: Optional[Tensor] = None) -> Tensor:
         """Forward pass."""
         # Standard EdgeConv forward pass
-        # x = super().forward(x, edge_index)
+        x = super().forward(data.x, data.edge_index)
         # YOU WILL NEED TO WRITE SOMETHING HERE FOR THE MLP
         # Recompute adjacency
-        # radii = scatter_min(self.radius_regressor(x), data.batch, dim=0).reshape(-1,1)
-        # for i in range(len(data_list)):
-        #     data_list[i].edge_index = radius_graph(
-        #         x=data_list[i].x[:, 0,1,2], r=radii[i,:].item()
-        #     )
-        # edge_index = radius_graph(
-        #     x=x[:, self.features_subset],
-        #     r=r,
-        #     batch=batch,
-        #     max_num_neighbors=64,
-        # ).to(self.device)
-
-        return edge_index
+        radii = scatter_min(
+            self.radius_regressor(x), data.batch, dim=0
+        ).reshape(-1, 1)
+        data_list = data.to_data_list()
+        for i in range(len(data_list)):
+            data_list[i].edge_index = radius_graph(
+                x=data_list[i].x[:, 0, 1, 2], r=radii[i, :].item()
+            )
+        Batch = data_list
+        return Batch.from_data_list(data_list)
