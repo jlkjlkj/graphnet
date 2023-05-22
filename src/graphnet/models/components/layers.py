@@ -51,7 +51,7 @@ class DynEdgeConv(EdgeConv, LightningModule):
         # self.global_variables = global_variables
         # Will estimate optimal radii
         self.radius_regressor = Sequential(
-            Linear(None, 32), ReLU(), Linear(32, 64), ReLU(), Linear(64, 1)
+            Linear(7, 32), ReLU(), Linear(32, 64), ReLU(), Linear(64, 1)
         )
 
     def forward(self, data: Data, batch: Optional[Tensor] = None) -> Tensor:
