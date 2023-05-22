@@ -53,6 +53,9 @@ class DynEdgeConv(EdgeConv, LightningModule):
         self.radius_regressor = Sequential(
             Linear(7, 32), ReLU(), Linear(32, 64), ReLU(), Linear(64, 1)
         )
+        # self.radius_regressor = Sequential(
+        #     Linear(7, 64), ReLU(), Linear(64, 1)
+        # )
 
     def forward(self, data: Data, batch: Optional[Tensor] = None) -> Tensor:
         """Forward pass."""
