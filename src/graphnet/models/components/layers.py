@@ -63,13 +63,16 @@ class DynEdgeConv(EdgeConv, LightningModule):
         radii = scatter_min(
             self.radius_regressor(x), data.batch, dim=0
         ).reshape(-1, 1)
+
+        # Bucketizing single graphs
         torch.arange(torch.unique(data.batch).size() + 1)
         batch_pos = torch.bucketize(
             torch.arange(torch.unique(data.batch).size() + 1), data.batch
         ).resize(None, 2)
+
+        # creating graph edge indices for each graph
         edge_index_list = []
         for count, idx in enumerate(batch_pos):
-            # extracting one graph from batch
             graph_x = x[idx[0] : idx[1]]
             # bulding edge_index based on indiviudal radius
             edge_index = torch.add(
