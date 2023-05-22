@@ -10,6 +10,7 @@ from torch_geometric.typing import Adj
 from pytorch_lightning import LightningModule
 from torch_scatter import scatter_min
 from torch_geometric.data import Data
+import torch
 
 
 class DynEdgeConv(EdgeConv, LightningModule):
@@ -57,15 +58,25 @@ class DynEdgeConv(EdgeConv, LightningModule):
         """Forward pass."""
         # Standard EdgeConv forward pass
         x = super().forward(data.x, data.edge_index)
-        # YOU WILL NEED TO WRITE SOMETHING HERE FOR THE MLP
-        # Recompute adjacency
+
+        # getting minimum of radius per graph
         radii = scatter_min(
             self.radius_regressor(x), data.batch, dim=0
         ).reshape(-1, 1)
-        data_list = data.to_data_list()
-        for i in range(len(data_list)):
-            data_list[i].edge_index = radius_graph(
-                x=data_list[i].x[:, 0, 1, 2], r=radii[i, :].item()
-            )
-        Batch = data_list
-        return Batch.from_data_list(data_list)
+        torch.arange(torch.unique(data.batch).size() + 1)
+        batch_pos = torch.bucketize(
+            torch.arange(torch.unique(data.batch).size() + 1), data.batch
+        ).resize(None, 2)
+        edge_index_list = []
+        for count, idx in enumerate(batch_pos):
+            # extracting one graph from batch
+            graph_x = x[idx[0] : idx[1]]
+            # bulding edge_index based on indiviudal radius
+            edge_index = torch.add(
+                radius_graph(graph_x[:, 0, 1, 2], r=radii[count]), idx[0]
+            ).to(self.device)
+            edge_index_list.append(edge_index)
+
+        data.edge_index = torch.cat(edge_index_list, dim=1)
+
+        return data
