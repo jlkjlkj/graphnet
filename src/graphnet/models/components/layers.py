@@ -84,5 +84,7 @@ class DynEdgeConv(EdgeConv, LightningModule):
             edge_index_list.append(edge_index)
 
         data.edge_index = torch.cat(edge_index_list, dim=1)
-
+        print(
+            "---------------------------Edge Data was successfully created!-----------------------------------------------------"
+        )
         return data
