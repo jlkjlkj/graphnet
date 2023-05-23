@@ -21,6 +21,7 @@ class DynEdgeConv(EdgeConv, LightningModule):
         nn: Callable,
         aggr: str = "max",
         nb_neighbors: int = 8,
+        # mlp_input: int = 7,
         features_subset: Optional[Union[Sequence[int], slice]] = None,
         # global_variables: Optional[Union[Sequence[int], slice]],
         **kwargs: Any,
@@ -48,14 +49,15 @@ class DynEdgeConv(EdgeConv, LightningModule):
         # Additional member variables
         self.nb_neighbors = nb_neighbors
         self.features_subset = features_subset
-        # self.global_variables = global_variables
+        # self.mlp_input = mlp_input
         # Will estimate optimal radii
         self.radius_regressor = Sequential(
-            Linear(7, 32), ReLU(), Linear(32, 64), ReLU(), Linear(64, 1)
+            Linear(7, 32),
+            ReLU(),
+            Linear(32, 64),
+            ReLU(),
+            Linear(64, 1),
         )
-        # self.radius_regressor = Sequential(
-        #     Linear(7, 64), ReLU(), Linear(64, 1)
-        # )
 
     def forward(
         self, x: Tensor, edge_index: Adj, batch: Optional[Tensor] = None
