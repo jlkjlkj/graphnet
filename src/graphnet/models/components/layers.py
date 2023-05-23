@@ -70,7 +70,11 @@ class DynEdgeConv(EdgeConv, LightningModule):
         x = super().forward(x, edge_index)
 
         print(tmp_x.size())
-
+        output = self.radius_regressor(tmp_x)
+        print(output[0])
+        print(
+            "---------------------------------------------------Made it until here---------------------------------------------"
+        )
         # getting minimum of radius per graph
         radii = scatter_min(self.radius_regressor(tmp_x), batch, dim=0)[
             0
