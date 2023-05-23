@@ -68,39 +68,26 @@ class DynEdgeConv(EdgeConv, LightningModule):
         tmp_x = torch.clone(x[:, 0 : self.mlp_input])
         # Standard EdgeConv forward pass
         x = super().forward(x, edge_index)
-
-        print(tmp_x.size())
-        output = self.radius_regressor(tmp_x)
-        print(output[0])
-        print(
-            "---------------------------------------------------Made it until here---------------------------------------------"
-        )
         # getting minimum of radius per graph
-        radii = scatter_min(self.radius_regressor(tmp_x), batch, dim=0)[
-            0
-        ].resize_(-1, 1)
-        print(
-            "---------------------------------------------------Made it until here---------------------------------------------"
-        )
+        radii = scatter_min(
+            self.radius_regressor(tmp_x).view(-1), batch, dim=0
+        )[0]
         # Bucketizing single graphs
-        torch.arange(torch.unique(batch).size() + 1)
+
         batch_pos = torch.bucketize(
-            torch.arange(torch.unique(batch).size() + 1), batch
+            torch.arange(torch.unique(batch).size(dim=0) + 1).to(self.device),
+            batch,
         )
-        print(
-            "----------------------------------this is batch_pos---------------------------------------------------------------"
-        )
-        print(batch_pos)
         # creating graph edge indices for each graph
+
         edge_index_list = []
-        for idx in range(len(batch_pos)):
+        for idx in range(len(batch_pos) - 1):
             graph_x = tmp_x[batch_pos[idx] : batch_pos[idx + 1]]
             # bulding edge_index based on indiviudal radius
             edge_index = torch.add(
-                radius_graph(graph_x[:, 0, 1, 2], r=radii[idx]), batch_pos[idx]
+                radius_graph(graph_x[:, 0:3], r=radii[idx]), batch_pos[idx]
             ).to(self.device)
             edge_index_list.append(edge_index)
-
         edge_index = torch.cat(edge_index_list, dim=1)
 
         return x, edge_index
