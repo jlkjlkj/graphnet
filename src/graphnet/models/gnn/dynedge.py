@@ -296,12 +296,13 @@ class DynEdge(GNN):
             )
 
             x = torch.cat((x, global_variables_distributed), dim=1)
-
+        print(x[0])
         # DynEdge-convolutions
+
         skip_connections = [x]
         for conv_layer in self._conv_layers:
-            # x, edge_index = conv_layer(x, edge_index, batch)
-            data = conv_layer(data, global_variables)
+            x, edge_index = conv_layer(x, edge_index, batch)
+            # data = conv_layer(data)
             skip_connections.append(data.x)
 
         # This is a test comment! for commit
