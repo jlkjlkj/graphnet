@@ -57,34 +57,43 @@ class DynEdgeConv(EdgeConv, LightningModule):
         #     Linear(7, 64), ReLU(), Linear(64, 1)
         # )
 
-    def forward(self, data: Data, batch: Optional[Tensor] = None) -> Tensor:
+    def forward(
+        self, x: Tensor, edge_index: Adj, batch: Optional[Tensor] = None
+    ) -> Tensor:
         """Forward pass."""
+        # putting aside x
+        tmp_x = torch.clone(x[:, 0:7])
         # Standard EdgeConv forward pass
-        x = super().forward(data.x, data.edge_index)
+        x = super().forward(x, edge_index)
+
+        print(tmp_x.size())
 
         # getting minimum of radius per graph
-        radii = scatter_min(
-            self.radius_regressor(x), data.batch, dim=0
-        ).reshape(-1, 1)
-
+        radii = scatter_min(self.radius_regressor(tmp_x), batch, dim=0)[
+            0
+        ].resize_(-1, 1)
+        print(
+            "---------------------------------------------------Made it until here---------------------------------------------"
+        )
         # Bucketizing single graphs
-        torch.arange(torch.unique(data.batch).size() + 1)
+        torch.arange(torch.unique(batch).size() + 1)
         batch_pos = torch.bucketize(
-            torch.arange(torch.unique(data.batch).size() + 1), data.batch
-        ).resize(None, 2)
-
+            torch.arange(torch.unique(batch).size() + 1), batch
+        )
+        print(
+            "----------------------------------this is batch_pos---------------------------------------------------------------"
+        )
+        print(batch_pos)
         # creating graph edge indices for each graph
         edge_index_list = []
-        for count, idx in enumerate(batch_pos):
-            graph_x = x[idx[0] : idx[1]]
+        for idx in range(len(batch_pos)):
+            graph_x = tmp_x[batch_pos[idx] : batch_pos[idx + 1]]
             # bulding edge_index based on indiviudal radius
             edge_index = torch.add(
-                radius_graph(graph_x[:, 0, 1, 2], r=radii[count]), idx[0]
+                radius_graph(graph_x[:, 0, 1, 2], r=radii[idx]), batch_pos[idx]
             ).to(self.device)
             edge_index_list.append(edge_index)
 
-        data.edge_index = torch.cat(edge_index_list, dim=1)
-        print(
-            "---------------------------Edge Data was successfully created!-----------------------------------------------------"
-        )
-        return data
+        edge_index = torch.cat(edge_index_list, dim=1)
+
+        return x, edge_index
