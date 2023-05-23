@@ -21,7 +21,7 @@ class DynEdgeConv(EdgeConv, LightningModule):
         nn: Callable,
         aggr: str = "max",
         nb_neighbors: int = 8,
-        # mlp_input: int = 7,
+        mlp_input: int = 19,
         features_subset: Optional[Union[Sequence[int], slice]] = None,
         # global_variables: Optional[Union[Sequence[int], slice]],
         **kwargs: Any,
@@ -36,6 +36,7 @@ class DynEdgeConv(EdgeConv, LightningModule):
             features_subset: Subset of features in `Data.x` that should be used
                 when dynamically performing the new graph clustering after the
                 `EdgeConv` operation. Defaults to all features.
+            mlp_input: input size of mlp used for radii approximation.
             **kwargs: Additional features to be passed to `EdgeConv`.
         """
         # Check(s)
@@ -49,10 +50,10 @@ class DynEdgeConv(EdgeConv, LightningModule):
         # Additional member variables
         self.nb_neighbors = nb_neighbors
         self.features_subset = features_subset
-        # self.mlp_input = mlp_input
+        self.mlp_input = mlp_input
         # Will estimate optimal radii
         self.radius_regressor = Sequential(
-            Linear(7, 32),
+            Linear(self.mlp_input, 32),
             ReLU(),
             Linear(32, 64),
             ReLU(),
@@ -64,7 +65,7 @@ class DynEdgeConv(EdgeConv, LightningModule):
     ) -> Tensor:
         """Forward pass."""
         # putting aside x
-        tmp_x = torch.clone(x[:, 0:7])
+        tmp_x = torch.clone(x[:, 0 : self.mlp_input])
         # Standard EdgeConv forward pass
         x = super().forward(x, edge_index)
 
