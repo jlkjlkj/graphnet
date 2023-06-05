@@ -53,9 +53,9 @@ class DynEdgeConv(EdgeConv, LightningModule):
         self.mlp_input = mlp_input
         # Will estimate optimal radii
         self.radius_regressor = Sequential(
-            Linear(self.mlp_input, 512),
+            Linear(self.mlp_input, 128),
             ReLU(),
-            Linear(256, 1),
+            Linear(128, 1),
         )
         # self.radius_regressor = Sequential(
         #     Linear(self.mlp_input, 32),
