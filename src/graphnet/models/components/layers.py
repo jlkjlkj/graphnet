@@ -21,7 +21,7 @@ class DynEdgeConv(EdgeConv, LightningModule):
         nn: Callable,
         aggr: str = "max",
         nb_neighbors: int = 8,
-        mlp_input: int = 256,
+        mlp_input: int = 19,
         features_subset: Optional[Union[Sequence[int], slice]] = None,
         # global_variables: Optional[Union[Sequence[int], slice]],
         **kwargs: Any,
